@@ -1,0 +1,105 @@
+{
+  "name": "@okc-edge/core",
+  "version": "1.0.0",
+  "exports": "./src/core/mod.ts",
+  "publish": {
+    "include": ["src/core/", "README.md", "LICENSE"]
+  },
+  "imports": {
+    "@std/assert": "jsr:@std/assert@^1.0.19",
+    "@std/http": "jsr:@std/http@^1.1.4",
+    "@std/path": "jsr:@std/path@^1.1.6",
+    "@zod/zod": "jsr:@zod/zod@^4.6.5"
+  },
+  "compilerOptions": {
+    "strict": true,
+    "exactOptionalPropertyTypes": true,
+    "noFallthroughCasesInSwitch": true,
+    "noImplicitOverride": true,
+    "noImplicitReturns": true,
+    "noUncheckedIndexedAccess": true,
+    "lib": ["esnext", "dom", "dom.iterable", "dom.asynciterable", "deno.ns"]
+  },
+  "tasks": {
+    "clean": "rm -rf dist && mkdir -p dist/public",
+    "build:static": {
+      "description": "Copy the hand-written shell (HTML, CSS, SVG) into the asset directory",
+      "command": "cp -r public/. dist/public",
+      "dependencies": ["clean"]
+    },
+    "build:ui": {
+      "description": "Bundle the browser code (src/ui) into one minified ES module",
+      "command": "deno bundle --platform=browser --minify --quiet -o dist/public/app.js src/ui/main.ts",
+      "dependencies": ["clean"]
+    },
+    "build:headers": {
+      "description": "Generate Cloudflare's _headers file from the core security policy",
+      "command": "deno run --quiet src/tooling/emit_headers.ts > dist/public/_headers",
+      "dependencies": ["clean"]
+    },
+    "build:catalog": {
+      "description": "Generate catalog.json: this codebase describing itself to the UI",
+      "command": "deno run --quiet --allow-read=src,CLAUDE.md,deno.json,wrangler.jsonc src/tooling/emit_catalog.ts > dist/public/catalog.json",
+      "dependencies": ["clean"]
+    },
+    "build:worker": {
+      "description": "Bundle the Cloudflare Workers adapter and the core into one file",
+      "command": "deno bundle --platform=browser --minify --quiet -o dist/worker.js src/adapters/cloudflare/worker.ts",
+      "dependencies": ["clean"]
+    },
+    "build": {
+      "description": "Build everything into dist/ (tasks run in parallel after clean)",
+      "command": "echo built dist/",
+      "dependencies": [
+        "build:static",
+        "build:ui",
+        "build:headers",
+        "build:catalog",
+        "build:worker"
+      ]
+    },
+    "dev": {
+      "description": "Run the Deno adapter (std/http/file-server) on http://localhost:8000",
+      "command": "deno run --allow-net=127.0.0.1,0.0.0.0,localhost --allow-read=. --allow-env=PORT,HOST src/adapters/deno/server.ts",
+      "dependencies": ["build"]
+    },
+    "dev:cf": {
+      "description": "Run the Cloudflare adapter locally inside workerd via Wrangler",
+      "command": "deno run -A npm:wrangler@4.145.0 dev",
+      "dependencies": ["build"]
+    },
+    "deploy": {
+      "description": "Deploy to Cloudflare Workers",
+      "command": "deno run -A npm:wrangler@4.145.0 deploy",
+      "dependencies": ["check"]
+    },
+    "test": "deno test --allow-read=src,tests",
+    "publish:check": {
+      "description": "Prove the core is a valid JSR package (no slow types)",
+      "command": "deno publish --dry-run --allow-dirty"
+    },
+    "check": {
+      "description": "Everything CI runs: format, lint, types, tests, build",
+      "command": "deno fmt --check && deno lint && deno check src tests && deno task test",
+      "dependencies": ["build"]
+    }
+  },
+  "fmt": {
+    "exclude": ["dist/", ".wrangler/"]
+  },
+  "lint": {
+    "exclude": ["dist/", ".wrangler/"],
+    "rules": {
+      "include": [
+        "eqeqeq",
+        "no-console",
+        "no-throw-literal",
+        "explicit-function-return-type"
+      ]
+    }
+  },
+  "test": {
+    "include": ["tests/"]
+  },
+  "exclude": ["dist/", ".wrangler/", "node_modules/"]
+}

@@ -1,0 +1,362 @@
+/* Buttons and controls. JS adds the motion (ripple, spring, burst, magnet);
+   CSS owns every look, so effects degrade to plain buttons without scripts. */
+.btn {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  min-height: 52px;
+  padding: 0 26px;
+  border: 0;
+  border-radius: 999px;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  text-decoration: none;
+  cursor: pointer;
+  isolation: isolate;
+  overflow: hidden;
+  user-select: none;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+  transition: box-shadow 0.45s var(--ease-out), background-position 0.8s
+    var(--ease-out), color 0.3s;
+}
+.btn::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+  background: linear-gradient(105deg, transparent 35%, rgb(255 255 255 / 0.45)
+    50%, transparent 65%);
+  transform: translateX(-130%);
+  transition: transform 0.9s var(--ease-out);
+}
+.btn:hover::after,
+.btn:focus-visible::after {
+  transform: translateX(130%);
+}
+
+.btn--primary {
+  color: #1d0e02;
+  background: linear-gradient(100deg, #ff5a36, #ff8a3d 30%, #ffb547 60%, #ffd88a
+    80%, #ff8a3d);
+  background-size: 220% 100%;
+  background-position: 0% 50%;
+  box-shadow: var(--shadow-glow);
+}
+.btn--primary:hover {
+  background-position: 70% 50%;
+  box-shadow: 0 0 0 1px rgb(255 214 140 / 0.6), 0 24px 70px -16px rgb(255 120 60
+    / 0.8);
+}
+.btn--ghost {
+  color: var(--text);
+  background: rgb(255 255 255 / 0.04);
+  box-shadow: inset 0 0 0 1px var(--line-strong);
+}
+.btn--ghost:hover {
+  box-shadow: inset 0 0 0 1px rgb(255 181 71 / 0.6), 0 0 34px -10px rgb(255 181
+    71 / 0.6);
+}
+.btn--sm {
+  min-height: 40px;
+  padding: 0 16px;
+  font-size: 0.88rem;
+}
+.btn--lg {
+  min-height: 62px;
+  padding: 0 34px;
+  font-size: 1.1rem;
+}
+.btn--block {
+  width: 100%;
+}
+.btn[disabled] {
+  cursor: progress;
+}
+
+.btn__label,
+.btn__icon {
+  position: relative;
+  z-index: 2;
+  transition: opacity 0.25s, transform 0.45s var(--ease-out);
+}
+.btn:hover .btn__icon {
+  transform: translateX(4px);
+}
+
+/* Ripple (injected by effects/press.ts) */
+.ripple {
+  position: absolute;
+  z-index: 0;
+  border-radius: 50%;
+  pointer-events: none;
+  background: radial-gradient(circle, rgb(255 255 255 / 0.5) 0%, rgb(255 255 255
+    / 0.16) 45%, transparent 70%);
+}
+.btn--primary .ripple {
+  background: radial-gradient(circle, rgb(255 255 255 / 0.85) 0%, rgb(255 236
+    190 / 0.35) 40%, transparent 70%);
+}
+
+/* Loading / success / error states (set by setButtonState) */
+.btn__status {
+  position: absolute;
+  inset: 0;
+  z-index: 3;
+  display: grid;
+  place-items: center;
+  pointer-events: none;
+}
+.btn__status > * {
+  grid-area: 1 / 1;
+  opacity: 0;
+  transition: opacity 0.2s;
+}
+.btn__spinner {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  border: 2.5px solid currentColor;
+  border-right-color: transparent;
+}
+.btn__mark {
+  width: 24px;
+  height: 24px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 3;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.btn__mark path {
+  stroke-dasharray: 30;
+  stroke-dashoffset: 30;
+}
+.btn[data-state="loading"] .btn__spinner {
+  opacity: 1;
+  animation: spin 0.7s linear infinite;
+}
+.btn[data-state="success"] .btn__mark--ok,
+.btn[data-state="error"] .btn__mark--err {
+  opacity: 1;
+}
+.btn[data-state="success"] .btn__mark--ok path,
+.btn[data-state="error"] .btn__mark--err path {
+  animation: draw 0.5s var(--ease-out) forwards;
+}
+.btn[data-state] .btn__label,
+.btn[data-state] .btn__icon {
+  opacity: 0;
+  transform: translateY(-10px) scale(0.96);
+}
+.btn[data-state="error"] {
+  animation: shake 0.45s var(--ease-out);
+}
+
+@keyframes spin {
+  to {
+    rotate: 360deg;
+  }
+}
+@keyframes draw {
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+@keyframes shake {
+  20% {
+    translate: -6px 0;
+  }
+  40% {
+    translate: 5px 0;
+  }
+  60% {
+    translate: -3px 0;
+  }
+  80% {
+    translate: 2px 0;
+  }
+}
+
+/* Burst particles live in a fixed layer so they can fly past the button. */
+.fx-layer {
+  position: fixed;
+  inset: 0;
+  z-index: 250;
+  pointer-events: none;
+  overflow: hidden;
+}
+.spark {
+  position: absolute;
+  width: 7px;
+  height: 7px;
+  margin: -3.5px 0 0 -3.5px;
+  border-radius: 2px;
+  background: var(--gold);
+  box-shadow: 0 0 12px currentColor;
+}
+.spark:nth-child(3n) {
+  background: var(--dirt);
+  color: var(--dirt);
+  border-radius: 50%;
+}
+.spark:nth-child(3n + 1) {
+  background: #fff3d6;
+  color: var(--gold);
+  width: 4px;
+  height: 4px;
+}
+.spark:nth-child(4n) {
+  background: var(--sky);
+  color: var(--sky);
+}
+.shock {
+  position: absolute;
+  width: 16px;
+  height: 16px;
+  margin: -8px 0 0 -8px;
+  border-radius: 50%;
+  border: 2px solid rgb(255 200 120 / 0.9);
+}
+
+/* Chips (radio / checkbox pills) ------------------------------------- */
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+.chip {
+  position: relative;
+}
+.chip input {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+}
+.chip span {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 42px;
+  padding: 0 16px;
+  border-radius: 999px;
+  border: 1px solid var(--line-strong);
+  background: rgb(255 255 255 / 0.03);
+  color: var(--text-dim);
+  font-size: 0.92rem;
+  cursor: pointer;
+  transition: all 0.35s var(--ease-out);
+}
+.chip span::before {
+  content: "";
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  border: 1.5px solid currentColor;
+  transition: all 0.35s var(--ease-spring);
+}
+.chip:hover span {
+  color: var(--text);
+  border-color: rgb(255 181 71 / 0.5);
+}
+.chip input:checked + span {
+  color: #1d0e02;
+  background: var(--grad-sunset);
+  border-color: transparent;
+  box-shadow: 0 10px 30px -12px rgb(255 120 60 / 0.8);
+}
+.chip input:checked + span::before {
+  background: #1d0e02;
+  border-color: #1d0e02;
+  transform: scale(1.2);
+}
+.chip input:focus-visible + span {
+  outline: 2px solid var(--gold);
+  outline-offset: 3px;
+}
+.chip input:disabled + span {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+.segmented {
+  display: inline-flex;
+  flex-wrap: wrap;
+  padding: 5px;
+  gap: 4px;
+  border-radius: 999px;
+  border: 1px solid var(--line-strong);
+  background: rgb(255 255 255 / 0.03);
+}
+.segmented .chip span {
+  border-color: transparent;
+  background: transparent;
+}
+
+/* Select and range ---------------------------------------------------- */
+.field {
+  display: grid;
+  gap: 8px;
+  margin-bottom: 14px;
+}
+.field__label {
+  color: var(--text-faint);
+  font: 600 11px/1.4 var(--font-mono);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+.select {
+  width: 100%;
+  min-height: 46px;
+  padding: 0 14px;
+  border-radius: var(--radius-s);
+  border: 1px solid var(--line-strong);
+  background: var(--ink-1);
+}
+
+input[type="range"] {
+  --fill: 0%;
+  width: 100%;
+  height: 28px;
+  margin: 6px 0 0;
+  background: transparent;
+  appearance: none;
+  cursor: pointer;
+}
+input[type="range"]::-webkit-slider-runnable-track {
+  height: 6px;
+  border-radius: 99px;
+  background: linear-gradient(90deg, var(--dirt), var(--gold) var(--fill),
+    rgb(255 255 255 / 0.1) var(--fill));
+}
+input[type="range"]::-moz-range-track {
+  height: 6px;
+  border-radius: 99px;
+  background: linear-gradient(90deg, var(--dirt), var(--gold) var(--fill),
+    rgb(255 255 255 / 0.1) var(--fill));
+}
+input[type="range"]::-webkit-slider-thumb {
+  appearance: none;
+  width: 22px;
+  height: 22px;
+  margin-top: -8px;
+  border-radius: 50%;
+  background: #fff6e4;
+  box-shadow: 0 0 0 5px rgb(255 181 71 / 0.25), 0 6px 18px rgb(0 0 0 / 0.5);
+  transition: box-shadow 0.3s var(--ease-out), scale 0.3s var(--ease-spring);
+}
+input[type="range"]::-moz-range-thumb {
+  width: 22px;
+  height: 22px;
+  border: 0;
+  border-radius: 50%;
+  background: #fff6e4;
+  box-shadow: 0 0 0 5px rgb(255 181 71 / 0.25), 0 6px 18px rgb(0 0 0 / 0.5);
+}
+input[type="range"]:active::-webkit-slider-thumb {
+  scale: 1.2;
+  box-shadow: 0 0 0 9px rgb(255 181 71 / 0.25), 0 6px 18px rgb(0 0 0 / 0.5);
+}

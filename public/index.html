@@ -1,0 +1,594 @@
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>OKC Edge: Cloudflare Workers, JSR and Claude Code for Oklahoma City businesses</title>
+    <meta
+      name="description"
+      content="An interactive guide to running an Oklahoma City business on Cloudflare Workers, built with JSR packages and Claude Code, that dissects its own architecture as you scroll."
+    >
+    <meta name="color-scheme" content="dark">
+    <meta name="theme-color" content="#06080d">
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+    <link rel="stylesheet" href="/css/tokens.css">
+    <link rel="stylesheet" href="/css/base.css">
+    <link rel="stylesheet" href="/css/buttons.css">
+    <link rel="stylesheet" href="/css/nav.css">
+    <link rel="stylesheet" href="/css/hero.css">
+    <link rel="stylesheet" href="/css/sections.css">
+    <link rel="stylesheet" href="/css/anatomy.css">
+    <link rel="stylesheet" href="/css/terminal.css">
+    <script type="module" src="/app.js"></script>
+  </head>
+  <body>
+    <a class="skip-link" href="#main">Skip to content</a>
+    <div class="progress" aria-hidden="true">
+      <span class="progress__bar" id="progress-bar"></span>
+    </div>
+
+    <header class="topbar" id="topbar">
+      <a class="brand" href="#top" aria-label="OKC Edge, back to top">
+        <svg class="brand__mark" viewBox="0 0 32 32" aria-hidden="true">
+          <path d="M2 8h28v15l-3 1.5-3-1-3 1-3-1-3 .5-3-1V11H2z" fill="none"
+            stroke="currentColor" stroke-width="2.2" stroke-linejoin="round" />
+          <circle cx="20.3" cy="15.7" r="2.6" fill="currentColor" />
+        </svg>
+        <span class="brand__word">OKC<em>/</em>EDGE</span>
+      </a>
+      <p class="topbar__now" aria-live="polite">
+        <span class="topbar__dot" aria-hidden="true"></span>
+        <span id="topbar-section">01 The edge</span>
+      </p>
+      <button
+        class="menu-toggle"
+        id="menu-toggle"
+        type="button"
+        aria-expanded="false"
+        aria-controls="menu"
+      >
+        <span class="menu-toggle__label" data-open="Menu"
+          data-close="Close">Menu</span>
+        <span class="menu-toggle__icon"
+          aria-hidden="true"><i></i><i></i><i></i></span>
+      </button>
+    </header>
+
+    <div class="menu" id="menu" role="dialog" aria-modal="true"
+      aria-label="Site navigation" hidden>
+      <div class="menu__panels" aria-hidden="true">
+        <span class="menu__panel menu__panel--1"></span>
+        <span class="menu__panel menu__panel--2"></span>
+        <span class="menu__panel menu__panel--3"></span>
+      </div>
+      <div class="menu__glow" aria-hidden="true"></div>
+      <div class="menu__inner">
+        <nav class="menu__nav" aria-label="Sections">
+          <ol class="menu__list">
+            <li><a class="menu__link" href="#top" data-blurb="Why an Oklahoma City business belongs on Cloudflare's network."><span class="menu__num">01</span><span class="menu__text">The edge</span></a></li>
+            <li><a class="menu__link" href="#stack" data-blurb="Workers, JSR and Claude Code: where it runs, what it's built from, how it gets built."><span class="menu__num">02</span><span class="menu__text">The stack</span></a></li>
+            <li><a class="menu__link" href="#edge" data-blurb="Fire real requests at the edge and watch the round trip."><span class="menu__num">03</span><span class="menu__text">Live request</span></a></li>
+            <li><a class="menu__link" href="#blueprint" data-blurb="Pick your industry and goals; get a plan and a Claude Code prompt."><span class="menu__num">04</span><span class="menu__text">Blueprint</span></a></li>
+            <li><a class="menu__link" href="#cost" data-blurb="Drag the sliders and see what a month on Workers costs."><span class="menu__num">05</span><span class="menu__text">Cost</span></a></li>
+            <li><a class="menu__link" href="#anatomy" data-blurb="This app, dissected: every module, its imports and its source."><span class="menu__num">06</span><span class="menu__text">Anatomy</span></a></li>
+            <li><a class="menu__link" href="#principles" data-blurb="OWASP and Unix principles, each one traced to a file and checked live."><span class="menu__num">07</span><span class="menu__text">Principles</span></a></li>
+            <li><a class="menu__link" href="#claude" data-blurb="How Claude Code reads the rules and writes the code."><span class="menu__num">08</span><span class="menu__text">Claude Code</span></a></li>
+            <li><a class="menu__link" href="#ship" data-blurb="Four commands from clone to live on workers.dev."><span class="menu__num">09</span><span class="menu__text">Ship it</span></a></li>
+          </ol>
+        </nav>
+        <aside class="menu__aside" aria-label="Status">
+          <p class="menu__eyebrow">Oklahoma City</p>
+          <p
+            class="menu__clock"><span id="menu-clock">--:--</span> <small>CT</small></p>
+          <p class="menu__blurb" id="menu-blurb"
+            aria-live="polite">Why an Oklahoma City business belongs on Cloudflare's network.</p>
+          <dl class="menu__facts">
+            <div>
+              <dt>Runtime</dt>
+              <dd data-edge-field="runtime">…</dd>
+            </div>
+            <div>
+              <dt>Data center</dt>
+              <dd data-edge-field="colo">…</dd>
+            </div>
+            <div>
+              <dt>Modules</dt>
+              <dd id="menu-modules">…</dd>
+            </div>
+          </dl>
+        </aside>
+      </div>
+    </div>
+
+    <main id="main">
+      <!-- 01 HERO ------------------------------------------------------- -->
+      <section class="hero" id="top" data-section="01 The edge"
+        aria-labelledby="hero-title">
+        <canvas class="hero__canvas" id="hero-canvas"
+          aria-hidden="true"></canvas>
+        <div class="hero__veil" aria-hidden="true"></div>
+        <div class="hero__content">
+          <p
+            class="eyebrow hero__eyebrow"><span>Oklahoma City</span><span>Cloudflare Workers</span><span>JSR</span><span>Claude Code</span></p>
+          <h1 class="hero__title" id="hero-title">
+            <span class="hero__line"><span>Run your OKC business</span></span>
+            <span
+              class="hero__line"><span>on the <em class="grad">edge</em> of</span></span>
+            <span class="hero__line"><span>the internet.</span></span>
+          </h1>
+          <p class="hero__lede">
+            Cloudflare Workers runs your code in data centers around the world, Oklahoma City among them.
+            JSR supplies secure, typed building blocks. Claude Code helps you put them together.
+            This site is built exactly that way, and it will show you how.
+          </p>
+          <div class="hero__actions">
+            <button class="btn btn--primary btn--burst" id="hero-probe"
+              type="button" data-magnetic>
+              <span class="btn__label">Send a live request</span>
+              <span class="btn__icon" aria-hidden="true">→</span>
+            </button>
+            <a class="btn btn--ghost" href="#anatomy"
+              data-magnetic><span class="btn__label">Tour the codebase</span></a>
+          </div>
+          <dl class="hud" aria-live="polite">
+            <div class="hud__item">
+              <dt>Runtime</dt>
+              <dd data-edge-field="runtime">waiting</dd>
+            </div>
+            <div class="hud__item">
+              <dt>Data center</dt>
+              <dd data-edge-field="colo">waiting</dd>
+            </div>
+            <div class="hud__item">
+              <dt>Round trip</dt>
+              <dd id="hud-rtt">— ms</dd>
+            </div>
+          </dl>
+        </div>
+        <a class="scroll-cue" href="#stack"
+          aria-label="Scroll to the stack"><span></span></a>
+      </section>
+
+      <!-- 02 STACK ------------------------------------------------------ -->
+      <section class="section" id="stack" data-section="02 The stack"
+        aria-labelledby="stack-title">
+        <header class="section__head" data-reveal>
+          <p class="eyebrow">02 · The stack</p>
+          <h2 class="section__title"
+            id="stack-title">Three tools. <span class="grad">One workflow.</span></h2>
+          <p class="section__lede">
+            You don't need a server room, a DevOps team or a big budget. You need a place to run code,
+            trustworthy parts to build it from, and a capable pair of hands. Tap a card to see where each
+            one lives in this codebase.
+          </p>
+        </header>
+        <div class="stack" data-reveal-group>
+          <article class="card card--workers" data-tilt data-reveal tabindex="0"
+            aria-expanded="false"
+            data-card-file="src/adapters/cloudflare/worker.ts">
+            <div class="card__glare" aria-hidden="true"></div>
+            <p class="card__kicker">Where it runs</p>
+            <h3 class="card__title">Cloudflare Workers</h3>
+            <ul class="card__points">
+              <li>Your code runs in Cloudflare data centers worldwide, Oklahoma City included, close to every customer.</li>
+              <li>Lightweight V8 isolates start in milliseconds. No servers to patch, scale or babysit.</li>
+              <li>The Free plan covers 100,000 requests a day, and static asset requests are free.</li>
+            </ul>
+            <div class="card__more" aria-live="polite"></div>
+            <p
+              class="card__hint">In this repo → <code>src/adapters/cloudflare/worker.ts</code></p>
+          </article>
+          <article class="card card--jsr" data-tilt data-reveal tabindex="0"
+            aria-expanded="false" data-card-file="deno.json">
+            <div class="card__glare" aria-hidden="true"></div>
+            <p class="card__kicker">What it's built from</p>
+            <h3 class="card__title">JSR</h3>
+            <ul class="card__points">
+              <li>An open-source registry for modern TypeScript and JavaScript packages.</li>
+              <li>Packages ship with types and docs, and work in Deno, Node, Bun, browsers and Workers.</li>
+              <li>Publishing from GitHub Actions adds provenance: proof of which source built the package.</li>
+            </ul>
+            <div class="card__more" aria-live="polite"></div>
+            <p
+              class="card__hint">In this repo → <code>deno.json</code> imports <code>@std/http</code> and <code>@zod/zod</code>, and the core itself passes <code>deno publish --dry-run</code></p>
+          </article>
+          <article class="card card--claude" data-tilt data-reveal tabindex="0"
+            aria-expanded="false" data-card-file="CLAUDE.md">
+            <div class="card__glare" aria-hidden="true"></div>
+            <p class="card__kicker">How it gets built</p>
+            <h3 class="card__title">Claude Code</h3>
+            <ul class="card__points">
+              <li>An agentic coding tool that works in your terminal, your IDE and the browser.</li>
+              <li>It reads the codebase and its <code>CLAUDE.md</code>, edits files, runs the tests and explains the diff.</li>
+              <li>You approve the plan and review the change; it does the typing.</li>
+            </ul>
+            <div class="card__more" aria-live="polite"></div>
+            <p class="card__hint">In this repo → <code>CLAUDE.md</code></p>
+          </article>
+        </div>
+      </section>
+
+      <!-- 03 LIVE REQUEST ----------------------------------------------- -->
+      <section class="section section--alt" id="edge"
+        data-section="03 Live request" aria-labelledby="edge-title">
+        <header class="section__head" data-reveal>
+          <p class="eyebrow">03 · Live request</p>
+          <h2 class="section__title"
+            id="edge-title">Distance is <span class="grad">latency.</span></h2>
+          <p class="section__lede">
+            Every request travels at the speed of light in fiber, roughly 200 km per millisecond, and
+            no software can beat physics. The edge wins by moving your code closer to your customers.
+          </p>
+        </header>
+        <div class="split">
+          <div class="panel probe" data-reveal>
+            <div class="panel__head">
+              <h3 class="panel__title">Mission control</h3>
+              <span class="badge" id="probe-badge">idle</span>
+            </div>
+            <div class="probe__track" aria-hidden="true">
+              <span class="probe__node probe__node--you">You</span>
+              <span
+                class="probe__wire"><i class="probe__packet" id="probe-packet"></i></span>
+              <span class="probe__node probe__node--edge"
+                id="probe-edge-label">Edge</span>
+            </div>
+            <ol class="probe__bars" id="probe-bars"
+              aria-label="Round-trip times"></ol>
+            <dl class="facts" id="probe-facts">
+              <div>
+                <dt>Runtime</dt>
+                <dd data-edge-field="runtime">—</dd>
+              </div>
+              <div>
+                <dt>Data center</dt>
+                <dd data-edge-field="colo">—</dd>
+              </div>
+              <div>
+                <dt>Near you</dt>
+                <dd data-edge-field="visitor">—</dd>
+              </div>
+              <div>
+                <dt>Protocol</dt>
+                <dd data-edge-field="protocol">—</dd>
+              </div>
+            </dl>
+            <button class="btn btn--primary btn--burst btn--block"
+              id="probe-run" type="button">
+              <span class="btn__label">Fire 5 requests at the edge</span>
+            </button>
+            <p
+              class="fineprint">Real <code>GET /api/edge</code> calls, timed in your browser. Locally you'll see the Deno or workerd adapter instead of a data center.</p>
+          </div>
+          <div class="panel lab" data-reveal>
+            <div class="panel__head">
+              <h3 class="panel__title">Physics lab</h3>
+              <span class="badge badge--muted">lower bounds</span>
+            </div>
+            <label class="field">
+              <span class="field__label">Your customer is in</span>
+              <select class="select" id="lab-customer"></select>
+            </label>
+            <label class="field">
+              <span class="field__label">Your single server is in</span>
+              <select class="select" id="lab-origin"></select>
+            </label>
+            <div class="lab__bars" id="lab-bars" aria-live="polite"></div>
+            <p class="fineprint">
+              Minimum round trip = 2 × great-circle distance ÷ 200 km/ms. Real routes are longer, so
+              real gaps are bigger. The edge figure uses the nearest of a sample of Cloudflare cities.
+            </p>
+          </div>
+        </div>
+      </section>
+
+      <!-- 04 BLUEPRINT --------------------------------------------------- -->
+      <section class="section" id="blueprint" data-section="04 Blueprint"
+        aria-labelledby="blueprint-title">
+        <header class="section__head" data-reveal>
+          <p class="eyebrow">04 · Blueprint</p>
+          <h2 class="section__title"
+            id="blueprint-title">Built for <span class="grad">your</span> corner of OKC.</h2>
+          <p class="section__lede">
+            From a Bricktown patio to a Stockyards City feed store: choose what you do and what you need.
+            The edge sends back a plan, the parts to build it from, and a prompt you can paste into Claude Code.
+          </p>
+        </header>
+        <form class="builder" id="blueprint-form" data-reveal novalidate>
+          <fieldset class="builder__step">
+            <legend><span class="step-num">1</span> What kind of business?</legend>
+            <div class="chips" id="industry-chips"></div>
+          </fieldset>
+          <fieldset class="builder__step">
+            <legend><span class="step-num">2</span> What should the web do for you? <small>(up to 4)</small></legend>
+            <div class="chips" id="goal-chips"></div>
+          </fieldset>
+          <fieldset class="builder__step">
+            <legend><span class="step-num">3</span> Who's building it?</legend>
+            <div class="segmented" id="team-chips"></div>
+          </fieldset>
+          <div class="builder__actions">
+            <button class="btn btn--primary btn--burst" type="submit"
+              id="blueprint-submit" data-magnetic>
+              <span class="btn__label">Generate my blueprint</span>
+            </button>
+            <p class="fineprint" id="blueprint-status"
+              aria-live="polite">Sent as <code>POST /api/blueprint</code> and checked by a strict zod schema at the edge.</p>
+          </div>
+        </form>
+        <div class="blueprint" id="blueprint-result" aria-live="polite"></div>
+      </section>
+
+      <!-- 05 COST -------------------------------------------------------- -->
+      <section class="section section--alt" id="cost" data-section="05 Cost"
+        aria-labelledby="cost-title">
+        <header class="section__head" data-reveal>
+          <p class="eyebrow">05 · Cost</p>
+          <h2 class="section__title"
+            id="cost-title">What would it <span class="grad">really</span> cost?</h2>
+          <p class="section__lede">
+            Drag the sliders. Each change is sent to <code>POST /api/estimate</code>, validated by the same
+            schema that sets these sliders' ranges, and priced by a pure function you can read below.
+          </p>
+        </header>
+        <div class="split split--wide">
+          <form class="panel sliders" id="cost-form" data-reveal novalidate>
+            <div class="slider" data-field="monthlyVisitors">
+              <label
+                for="s-visitors"><span>Monthly visits</span><output id="o-visitors">5,000</output></label>
+              <input type="range" id="s-visitors" min="0" max="12" step="1"
+                value="2">
+            </div>
+            <div class="slider" data-field="pagesPerVisit">
+              <label
+                for="s-pages"><span>Pages per visit</span><output id="o-pages">4</output></label>
+              <input type="range" id="s-pages" min="1" max="30" step="0.5"
+                value="4">
+            </div>
+            <div class="slider" data-field="apiCallsPerPage">
+              <label
+                for="s-api"><span>Worker calls per page</span><output id="o-api">1</output></label>
+              <input type="range" id="s-api" min="0" max="20" step="0.5"
+                value="1">
+            </div>
+            <div class="slider" data-field="cpuMsPerCall">
+              <label
+                for="s-cpu"><span>CPU ms per call</span><output id="o-cpu">3</output></label>
+              <input type="range" id="s-cpu" min="0.5" max="50" step="0.5"
+                value="3">
+            </div>
+            <div class="slider" data-field="currentMonthlyHosting">
+              <label
+                for="s-hosting"><span>Hosting you pay today</span><output id="o-hosting">$40</output></label>
+              <input type="range" id="s-hosting" min="0" max="1000" step="5"
+                value="40">
+            </div>
+          </form>
+          <div class="panel bill" data-reveal aria-live="polite">
+            <div class="panel__head">
+              <h3 class="panel__title">Your month on Workers</h3>
+              <span class="badge" id="bill-plan">…</span>
+            </div>
+            <p
+              class="bill__total"><span class="bill__currency">$</span><span id="bill-total">0.00</span><small>/ month</small></p>
+            <div class="bill__compare" id="bill-compare"></div>
+            <ul class="bill__lines" id="bill-lines"></ul>
+            <ul class="bill__notes" id="bill-notes"></ul>
+          </div>
+        </div>
+        <div class="panel breaker" data-reveal>
+          <div class="panel__head">
+            <h3 class="panel__title">Now try to break it</h3>
+            <span class="badge badge--warn">OWASP</span>
+          </div>
+          <p
+            class="breaker__intro">Send the kind of input attackers send. Validation happens at the edge, not in the browser, so these go straight past the sliders.</p>
+          <div class="breaker__buttons" id="breaker-buttons"></div>
+          <pre class="codebox" id="breaker-output"
+            aria-live="polite"><code>Pick an attack above to see the edge's answer.</code></pre>
+        </div>
+      </section>
+
+      <!-- 06 ANATOMY ----------------------------------------------------- -->
+      <section class="section" id="anatomy" data-section="06 Anatomy"
+        aria-labelledby="anatomy-title">
+        <header class="section__head" data-reveal>
+          <p class="eyebrow">06 · Anatomy</p>
+          <h2 class="section__title"
+            id="anatomy-title">This app, <span class="grad">dissected.</span></h2>
+          <p class="section__lede">
+            Everything below is generated at build time from the real source by
+            <code>src/tooling/emit_catalog.ts</code>. Nothing is hand-drawn, so the diagram cannot drift from the code.
+          </p>
+        </header>
+
+        <div class="rings" data-reveal>
+          <div class="rings__diagram" aria-hidden="true">
+            <span class="ring ring--ui"></span>
+            <span class="ring ring--adapters"></span>
+            <span class="ring ring--ports"></span>
+            <span class="ring ring--core"></span>
+          </div>
+          <ol class="rings__legend" id="layer-legend">
+            <li><button class="layer-btn" type="button" data-layer="core"><b>Core</b><span>Pure functions over Web-standard <code>Request</code>/<code>Response</code>. No runtime APIs, no I/O, no classes.</span><em data-layer-count="core">…</em></button></li>
+            <li><button class="layer-btn" type="button" data-layer="ports"><b>Ports</b><span><code>serveStatic</code> and <code>log</code>: the only doors out of the core, declared in <code>types.ts</code>.</span><em>2 ports</em></button></li>
+            <li><button class="layer-btn" type="button" data-layer="cloudflare"><b>Cloudflare adapter</b><span>Maps <code>env.ASSETS</code> and <code>request.cf</code> onto the ports. The first, production adapter.</span><em data-layer-count="cloudflare">…</em></button></li>
+            <li><button class="layer-btn" type="button" data-layer="deno"><b>Deno adapter</b><span>The same core with <code>@std/http/file-server</code>, proving it's portable.</span><em data-layer-count="deno">…</em></button></li>
+            <li><button class="layer-btn" type="button" data-layer="ui"><b>Browser</b><span>This page. Shares the core's types, never its code.</span><em data-layer-count="ui">…</em></button></li>
+            <li><button class="layer-btn" type="button" data-layer="tooling"><b>Tooling</b><span>Small programs that write programs: <code>_headers</code> and <code>catalog.json</code>.</span><em data-layer-count="tooling">…</em></button></li>
+          </ol>
+        </div>
+
+        <div class="stats" id="anatomy-stats" data-reveal></div>
+
+        <div class="explorer" data-reveal>
+          <nav class="explorer__tree" id="explorer-tree"
+            aria-label="Source files"></nav>
+          <article class="viewer" id="viewer" aria-live="polite">
+            <p class="viewer__empty">Loading the catalog…</p>
+          </article>
+        </div>
+
+        <div class="panel lifecycle" data-reveal>
+          <div class="panel__head">
+            <h3 class="panel__title">Follow one request through the code</h3>
+            <span class="badge">POST /api/estimate</span>
+          </div>
+          <ol class="lifecycle__rail" id="lifecycle-rail"></ol>
+          <div class="lifecycle__body">
+            <p class="lifecycle__text" id="lifecycle-text"
+              aria-live="polite"></p>
+            <div class="lifecycle__actions">
+              <button class="btn btn--ghost btn--sm" type="button"
+                id="lifecycle-prev"><span class="btn__label">← Back</span></button>
+              <button class="btn btn--ghost btn--sm" type="button"
+                id="lifecycle-play"><span class="btn__label">Autoplay</span></button>
+              <button class="btn btn--primary btn--sm" type="button"
+                id="lifecycle-next"><span class="btn__label">Next step →</span></button>
+            </div>
+          </div>
+        </div>
+
+        <div class="panel graph" data-reveal>
+          <div class="panel__head">
+            <h3 class="panel__title">Dependency graph</h3>
+            <div class="toggles" id="graph-toggles" role="group"
+              aria-label="Layers shown"></div>
+          </div>
+          <p
+            class="fineprint">Entry points at the top, foundations at the bottom; each line is an import. Hover to trace everything a file pulls in, click to open it.</p>
+          <div class="graph__scroll" id="graph"></div>
+        </div>
+
+        <div class="panel rules" data-reveal>
+          <div class="panel__head">
+            <h3
+              class="panel__title">Architecture rules, checked on every build</h3>
+            <span class="badge" id="rules-badge">…</span>
+          </div>
+          <ul class="rules__list" id="rules-list"></ul>
+          <p
+            class="fineprint">Defined once in <a href="#anatomy" data-open-module="src/tooling/architecture.ts" data-symbol="RULES"><code>src/tooling/architecture.ts</code></a>, run by the test suite and published here.</p>
+        </div>
+      </section>
+
+      <!-- 07 PRINCIPLES -------------------------------------------------- -->
+      <section class="section section--alt" id="principles"
+        data-section="07 Principles" aria-labelledby="principles-title">
+        <header class="section__head" data-reveal>
+          <p class="eyebrow">07 · Principles</p>
+          <h2 class="section__title"
+            id="principles-title">Secure by design. <span class="grad">Simple by choice.</span></h2>
+          <p class="section__lede">
+            Two traditions guide this codebase: OWASP for keeping attackers out, and the Unix philosophy for keeping
+            complexity out. Each principle links to the file that applies it.
+          </p>
+        </header>
+        <div class="split">
+          <div class="panel" data-reveal>
+            <div class="panel__head">
+              <h3 class="panel__title">OWASP, applied</h3>
+            </div>
+            <ul class="principles" id="owasp-list"></ul>
+          </div>
+          <div class="panel" data-reveal>
+            <div class="panel__head">
+              <h3 class="panel__title">Unix philosophy, applied</h3>
+            </div>
+            <ul class="principles" id="unix-list"></ul>
+          </div>
+        </div>
+        <div class="panel audit" data-reveal>
+          <div class="panel__head">
+            <h3 class="panel__title">Live security audit</h3>
+            <span class="badge" id="audit-badge">not run</span>
+          </div>
+          <p class="audit__intro">
+            The API publishes its own policy at <code>GET /api</code>. This audit fetches it, then checks the headers your
+            browser actually received from the API (set by the core) and from this page (set by Cloudflare's <code>_headers</code>
+            file, generated from the same policy).
+          </p>
+          <button class="btn btn--primary btn--burst" id="audit-run"
+            type="button"
+            data-magnetic><span class="btn__label">Audit this page now</span></button>
+          <div class="audit__table" id="audit-table" aria-live="polite"></div>
+        </div>
+      </section>
+
+      <!-- 08 CLAUDE CODE ------------------------------------------------- -->
+      <section class="section" id="claude" data-section="08 Claude Code"
+        aria-labelledby="claude-title">
+        <header class="section__head" data-reveal>
+          <p class="eyebrow">08 · Claude Code</p>
+          <h2 class="section__title"
+            id="claude-title">You decide. <span class="grad">Claude types.</span></h2>
+          <p class="section__lede">
+            Clear rules make a codebase easy for people and for AI. Claude Code reads <code>CLAUDE.md</code>, follows the
+            architecture, and proves its work with the same <code>deno task check</code> you would run.
+          </p>
+        </header>
+        <div class="split split--wide">
+          <div class="terminal" data-reveal>
+            <div class="terminal__bar">
+              <span class="terminal__dots"
+                aria-hidden="true"><i></i><i></i><i></i></span>
+              <span class="terminal__title">claude · ~/okc-edge</span>
+              <span class="badge badge--muted">illustrative session</span>
+            </div>
+            <div class="terminal__tabs" id="session-tabs" role="tablist"
+              aria-label="Example sessions"></div>
+            <div class="terminal__screen" id="terminal-screen" role="log"
+              aria-live="polite"></div>
+          </div>
+          <div class="panel why" data-reveal>
+            <div class="panel__head">
+              <h3 class="panel__title">Why this repo is easy to delegate</h3>
+            </div>
+            <ul class="why__list">
+              <li><b>Rules in writing.</b> <code>CLAUDE.md</code> states the architecture in plain sentences.</li>
+              <li><b>Rules in code.</b> Architecture tests fail the build if the core imports a runtime API or anything grows a class.</li>
+              <li><b>Small, pure pieces.</b> A function with no side effects is easy to read, test and change safely.</li>
+              <li><b>One command of truth.</b> <code>deno task check</code> runs format, lint, types, tests and the build.</li>
+            </ul>
+            <details class="claude-md">
+              <summary>Read this repo's CLAUDE.md</summary>
+              <pre class="codebox codebox--doc"
+                id="claude-md"><code>Loading…</code></pre>
+            </details>
+          </div>
+        </div>
+      </section>
+
+      <!-- 09 SHIP -------------------------------------------------------- -->
+      <section class="section section--finale" id="ship"
+        data-section="09 Ship it" aria-labelledby="ship-title">
+        <header class="section__head" data-reveal>
+          <p class="eyebrow">09 · Ship it</p>
+          <h2 class="section__title"
+            id="ship-title">From clone to <span class="grad">live</span> in four commands.</h2>
+        </header>
+        <ol class="commands" data-reveal-group>
+          <li class="command"
+            data-reveal><span class="command__n">1</span><code>deno task dev</code><span class="command__what">Build, then serve with the Deno adapter and <code>std/http/file-server</code> on localhost:8000.</span><button class="btn btn--ghost btn--sm copy" type="button" data-copy="deno task dev"><span class="btn__label">Copy</span></button></li>
+          <li class="command"
+            data-reveal><span class="command__n">2</span><code>deno task dev:cf</code><span class="command__what">The same build inside <code>workerd</code>, Cloudflare's runtime, via Wrangler.</span><button class="btn btn--ghost btn--sm copy" type="button" data-copy="deno task dev:cf"><span class="btn__label">Copy</span></button></li>
+          <li class="command"
+            data-reveal><span class="command__n">3</span><code>deno task check</code><span class="command__what">Format, lint, type-check, test and enforce the architecture rules.</span><button class="btn btn--ghost btn--sm copy" type="button" data-copy="deno task check"><span class="btn__label">Copy</span></button></li>
+          <li class="command"
+            data-reveal><span class="command__n">4</span><code>deno task deploy</code><span class="command__what">Check everything, then ship to Cloudflare Workers.</span><button class="btn btn--ghost btn--sm copy" type="button" data-copy="deno task deploy"><span class="btn__label">Copy</span></button></li>
+        </ol>
+        <div class="finale" data-reveal>
+          <p
+            class="finale__line">Big-city infrastructure, <span class="grad">Oklahoma-sized bill.</span></p>
+          <a class="btn btn--primary btn--burst btn--lg" href="#blueprint"
+            data-magnetic><span class="btn__label">Build my blueprint</span></a>
+        </div>
+      </section>
+    </main>
+
+    <footer class="footer">
+      <p>OKC Edge is an independent demo. Cloudflare, JSR, Deno and Claude are trademarks of their respective owners; no affiliation is implied.</p>
+      <p>Prices and limits change. Check <a href="https://developers.cloudflare.com/workers/platform/pricing/" rel="noopener noreferrer">Cloudflare's pricing page</a> before deciding.</p>
+    </footer>
+  </body>
+</html>

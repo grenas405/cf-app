@@ -1,0 +1,23 @@
+// Cloudflare Workers configuration: the first adapter.
+// Deno bundles src/adapters/cloudflare/worker.ts into dist/worker.js
+// (`deno task build`), so Wrangler only uploads; it never re-bundles.
+{
+  "name": "okc-edge",
+  "main": "dist/worker.js",
+  "no_bundle": true,
+  "compatibility_date": "2026-09-01",
+  "workers_dev": true,
+  "assets": {
+    // Built by `deno task build` from public/ plus generated files.
+    "directory": "dist/public",
+    // The adapter fills the core's `serveStatic` port with this binding.
+    "binding": "ASSETS",
+    "not_found_handling": "404-page",
+    // Static files are served straight from Cloudflare's network (free);
+    // only API calls wake the Worker. "/api/*" does not match "/api" itself.
+    "run_worker_first": ["/api", "/api/*"]
+  },
+  "observability": {
+    "enabled": true
+  }
+}

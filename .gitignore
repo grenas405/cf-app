@@ -1,0 +1,10 @@
+# Build output (regenerate with `deno task build`)
+dist/
+
+# Wrangler local state
+.wrangler/
+node_modules/
+
+# Secrets never belong in git
+.dev.vars*
+.env*
