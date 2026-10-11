@@ -95,9 +95,22 @@ dist/public/              public/ + generated files:
 
 ## Deploying
 
+From your machine:
+
 ```sh
 deno task deploy   # runs check first; wrangler will ask you to log in once
 ```
+
+From Cloudflare's Git integration (Workers Builds), whose build image has Node
+but not Deno, use these settings. Deno is published on npm, so `npx` fetches it:
+
+| Setting        | Value                             |
+| -------------- | --------------------------------- |
+| Build command  | `npx --yes deno@2.9.6 task build` |
+| Deploy command | `npx wrangler deploy`             |
+| Root directory | `/`                               |
+
+`dist/` is not committed, so the build command is required.
 
 Workers prices in the estimator were checked on 2026-10-11. Confirm them on
 [Cloudflare's pricing page](https://developers.cloudflare.com/workers/platform/pricing/).

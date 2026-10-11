@@ -5,6 +5,8 @@
   "name": "okc-edge",
   "main": "dist/worker.js",
   "no_bundle": true,
+  // Upload only worker.js; don't also turn dist/public/*.html into modules.
+  "find_additional_modules": false,
   "compatibility_date": "2026-09-01",
   "workers_dev": true,
   "assets": {
